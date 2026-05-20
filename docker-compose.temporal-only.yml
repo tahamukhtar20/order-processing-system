@@ -3,15 +3,13 @@ services:
     image: postgres:16-alpine
     container_name: temporal-postgresql
     environment:
-      POSTGRES_USER: temporal
-      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: ${TEMPORAL_DB_USER:-temporal}
+      POSTGRES_PASSWORD: ${TEMPORAL_DB_PASSWORD:-temporal}
       POSTGRES_DB: temporal
-    ports:
-      - '5432:5432'
     volumes:
       - postgresql_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U temporal']
+      test: ['CMD-SHELL', 'pg_isready -U ${TEMPORAL_DB_USER:-temporal}']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -27,8 +25,8 @@ services:
     environment:
       - DB=postgres12
       - DB_PORT=5432
-      - POSTGRES_USER=temporal
-      - POSTGRES_PWD=temporal
+      - POSTGRES_USER=${TEMPORAL_DB_USER:-temporal}
+      - POSTGRES_PWD=${TEMPORAL_DB_PASSWORD:-temporal}
       - POSTGRES_SEEDS=postgresql
     ports:
       - '7233:7233'
@@ -36,7 +34,7 @@ services:
       - temporal-net
 
   temporal-ui:
-    image: temporalio/ui:latest
+    image: temporalio/ui:2.49.1
     container_name: temporal-ui
     depends_on:
       - temporal
