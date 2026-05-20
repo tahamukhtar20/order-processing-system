@@ -1,0 +1,11 @@
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/out/
+**/coverage/
+**/*.tsbuildinfo
+**/next-env.d.ts
+**/.vercel/
+.husky/_/
+package-lock.json
