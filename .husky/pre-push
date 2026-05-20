@@ -1,1 +1,6 @@
 npm run typecheck --if-present
+
+if ! git diff --quiet package-lock.json || ! git diff --cached --quiet package-lock.json; then
+  echo "ERROR: package-lock.json has uncommitted changes. Run 'npm install' and commit the lockfile."
+  exit 1
+fi
