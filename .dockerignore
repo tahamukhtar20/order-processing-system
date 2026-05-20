@@ -1,0 +1,17 @@
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/out/
+**/coverage/
+**/.temporal/
+**/*.tsbuildinfo
+
+.git/
+.husky/
+.github/
+
+.env
+.env.*
+
+*.log
