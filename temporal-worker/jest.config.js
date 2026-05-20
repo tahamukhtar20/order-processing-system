@@ -6,6 +6,7 @@ const config = {
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
+  passWithNoTests: true,
 };
 
 module.exports = config;
