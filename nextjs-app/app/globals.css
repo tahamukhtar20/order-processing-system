@@ -52,7 +52,7 @@ body {
     @apply mt-1 text-xs text-red-600;
   }
 
-  /* Buttons -compose as `btn btn-primary` */
+  /* Buttons - compose as `btn btn-primary` */
   .btn {
     @apply rounded-md px-4 py-2 text-sm font-semibold shadow-sm
            focus:outline-none focus:ring-2 focus:ring-offset-2
@@ -65,13 +65,13 @@ body {
     @apply w-full;
   }
 
-  /* Buttons -additional variants */
+  /* Buttons - additional variants */
   .btn-secondary {
     @apply bg-white text-gray-700 ring-1 ring-inset ring-gray-300
            hover:bg-gray-50 focus:ring-gray-400;
   }
 
-  /* Alerts -compose as `alert alert-error` */
+  /* Alerts - compose as `alert alert-error` */
   .alert {
     @apply rounded-md p-3 text-sm;
   }
@@ -82,7 +82,7 @@ body {
     @apply bg-amber-50 text-amber-800;
   }
 
-  /* Badges -compose as `badge badge-running` */
+  /* Badges - compose as `badge badge-running` */
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }

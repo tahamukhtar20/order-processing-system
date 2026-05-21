@@ -128,7 +128,7 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
       try {
         const res = await fetch(`/api/orders/${workflowId}`);
         if (!res.ok) {
-          setPollError(true);
+          if (!cancelled) setPollError(true);
           return;
         }
         const data = (await res.json()) as OrderStatusData;
@@ -137,7 +137,7 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
           setPollError(false);
         }
       } catch {
-        setPollError(true);
+        if (!cancelled) setPollError(true);
       }
     }, POLL_INTERVAL_MS);
 

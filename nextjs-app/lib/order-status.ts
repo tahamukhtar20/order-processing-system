@@ -11,9 +11,19 @@ import type {
 
 import { getTemporalClient } from './temporal-client';
 
-// description.status arrives as { code: number, name: string } from protobufjs, not a plain number
+// description.status arrives as { code: number, name: string } from protobufjs, not a plain number.
+// Numeric-code fallback guards against alternate SDK shapes or future changes.
+const NUMERIC_STATUS: Record<number, string> = {
+  1: 'RUNNING',
+  2: 'COMPLETED',
+  3: 'FAILED',
+  4: 'CANCELLED',
+  7: 'TIMED_OUT',
+};
+
 function wfStatusName(s: unknown): string {
   if (s && typeof s === 'object' && 'name' in s) return (s as { name: string }).name;
+  if (typeof s === 'number') return NUMERIC_STATUS[s] ?? '';
   return '';
 }
 

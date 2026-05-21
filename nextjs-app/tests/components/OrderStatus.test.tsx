@@ -102,27 +102,30 @@ describe('OrderStatus', () => {
 
   it('polls and updates to the new state', async () => {
     jest.useFakeTimers();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => completedInitial,
-    });
+    try {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => completedInitial,
+      });
 
-    render(
-      <OrderStatus
-        workflowId={runningInitial.workflowId}
-        initialState={runningInitial}
-        productId="SKU-1001"
-      />,
-    );
+      render(
+        <OrderStatus
+          workflowId={runningInitial.workflowId}
+          initialState={runningInitial}
+          productId="SKU-1001"
+        />,
+      );
 
-    expect(screen.getByText('Running')).toBeInTheDocument();
+      expect(screen.getByText('Running')).toBeInTheDocument();
 
-    await act(async () => {
-      jest.advanceTimersByTime(1000);
-    });
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
 
-    await waitFor(() => expect(screen.getByText('Completed')).toBeInTheDocument());
-    jest.useRealTimers();
+      await waitFor(() => expect(screen.getByText('Completed')).toBeInTheDocument());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('calls cancel endpoint when cancel button is clicked', async () => {

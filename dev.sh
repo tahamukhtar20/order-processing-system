@@ -33,7 +33,7 @@ cleanup() {
   fi
   exit 0
 }
-trap cleanup INT TERM
+trap cleanup INT TERM EXIT
 
 log "Starting Temporal via Docker Compose..."
 docker compose -f "$ROOT/docker-compose.temporal-only.yml" up -d
