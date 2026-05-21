@@ -19,7 +19,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@worker-types": ["../temporal-worker/src/shared/types"]
+      "@worker-types": ["../temporal-worker/src/shared/types"],
+      "@worker-types/*": ["../temporal-worker/src/shared/types/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
