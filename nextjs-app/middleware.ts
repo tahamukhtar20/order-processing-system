@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// In-memory sliding-window rate limiter (per IP, resets every WINDOW_MS).
-// Edge runtime keeps this map alive across requests within the same isolate.
+// In-memory fixed-window rate limiter (per IP, window resets WINDOW_MS after
+// the first request in a window). Edge runtime keeps this map alive across
+// requests within the same isolate.
+//
+// Trust note: IP is read from x-forwarded-for / x-real-ip. These are only
+// reliable when your deployment sits behind a trusted reverse proxy (e.g.
+// Vercel, nginx) that overwrites these headers. Without that, clients can
+// spoof the IP to bypass the limit. For self-hosted setups, ensure the proxy
+// strips / rewrites forwarded headers before they reach this middleware.
 const RATE_LIMIT = 10; // max POST /api/orders per window
 const WINDOW_MS = 60_000; // 1 minute
+const MAX_ENTRIES = 10_000; // evict oldest when map grows beyond this
 
 interface WindowEntry {
   count: number;
@@ -12,19 +20,30 @@ interface WindowEntry {
 
 const windows = new Map<string, WindowEntry>();
 
-function isRateLimited(ip: string): boolean {
+function isRateLimited(ip: string): { limited: boolean; retryAfterMs: number } {
   const now = Date.now();
+
+  // Evict expired entries to prevent unbounded map growth
+  if (windows.size >= MAX_ENTRIES) {
+    for (const [key, entry] of windows) {
+      if (now >= entry.resetAt) windows.delete(key);
+      if (windows.size < MAX_ENTRIES) break;
+    }
+  }
+
   const entry = windows.get(ip);
 
   if (!entry || now >= entry.resetAt) {
     windows.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
+    return { limited: false, retryAfterMs: 0 };
   }
 
-  if (entry.count >= RATE_LIMIT) return true;
+  if (entry.count >= RATE_LIMIT) {
+    return { limited: true, retryAfterMs: entry.resetAt - now };
+  }
 
   entry.count++;
-  return false;
+  return { limited: false, retryAfterMs: 0 };
 }
 
 export function middleware(req: NextRequest) {
@@ -39,14 +58,15 @@ export function middleware(req: NextRequest) {
       req.headers.get('x-real-ip') ??
       'anonymous';
 
-    if (isRateLimited(ip)) {
+    const { limited, retryAfterMs } = isRateLimited(ip);
+    if (limited) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait before placing another order.' },
         {
           status: 429,
           headers: {
             'x-request-id': requestId,
-            'Retry-After': String(Math.ceil(WINDOW_MS / 1000)),
+            'Retry-After': String(Math.ceil(retryAfterMs / 1000)),
           },
         },
       );

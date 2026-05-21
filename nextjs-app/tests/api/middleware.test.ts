@@ -3,6 +3,7 @@
  */
 import { NextRequest } from 'next/server';
 
+import { GET as healthGET } from '../../app/api/health/route';
 import { middleware } from '../../middleware';
 
 function req(method: string, pathname: string, ip?: string) {
@@ -11,6 +12,16 @@ function req(method: string, pathname: string, ip?: string) {
   if (ip) headers['x-forwarded-for'] = ip;
   return new NextRequest(url, { method, headers });
 }
+
+describe('GET /api/health', () => {
+  it('returns 200 with status ok and a numeric ts', async () => {
+    const res = healthGET();
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string; ts: number };
+    expect(body.status).toBe('ok');
+    expect(typeof body.ts).toBe('number');
+  });
+});
 
 describe('middleware', () => {
   it('attaches x-request-id to every response', async () => {
@@ -34,6 +45,20 @@ describe('middleware', () => {
     expect(res.status).toBe(429);
     const body = (await res.json()) as { error: string };
     expect(body.error).toMatch(/too many requests/i);
+  });
+
+  it('sets Retry-After based on remaining window time, not the full window', async () => {
+    const ip = `retry-${Date.now()}`;
+    for (let i = 0; i < 10; i++) {
+      await middleware(req('POST', '/api/orders', ip));
+    }
+    const before = Date.now();
+    const res = await middleware(req('POST', '/api/orders', ip));
+    const retryAfter = Number(res.headers.get('Retry-After'));
+    const maxExpected = Math.ceil((60_000 - (Date.now() - before)) / 1000) + 1;
+    expect(retryAfter).toBeGreaterThan(0);
+    expect(retryAfter).toBeLessThanOrEqual(60);
+    expect(retryAfter).toBeLessThanOrEqual(maxExpected);
   });
 
   it('does not rate-limit GET requests', async () => {
