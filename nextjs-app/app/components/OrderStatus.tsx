@@ -16,6 +16,7 @@ import OrderSummary from './OrderSummary';
 
 const POLL_INTERVAL_MS = 1000;
 const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMED_OUT']);
+const SSE_BACKOFF_MS = [1000, 2000, 4000, 8000];
 
 interface Props {
   workflowId: string;
@@ -118,36 +119,88 @@ function statusBadgeLabel(status: OrderStatusData): string {
 export default function OrderStatus({ workflowId, initialState, productId }: Props) {
   const [state, setState] = useState<OrderStatusData>(initialState);
   const [cancelling, setCancelling] = useState(false);
-  const [pollError, setPollError] = useState(false);
+  const [connError, setConnError] = useState(false);
 
   useEffect(() => {
     if (TERMINAL_STATUSES.has(state.status)) return;
 
     let cancelled = false;
+    let retryCount = 0;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // --- polling fallback (used when SSE is unavailable) ---
     async function poll() {
       try {
         const res = await fetch(`/api/orders/${workflowId}`);
         if (!res.ok) {
-          if (!cancelled) setPollError(true);
+          if (!cancelled) setConnError(true);
         } else {
           const data = (await res.json()) as OrderStatusData;
           if (!cancelled) {
             setState(data);
-            setPollError(false);
+            setConnError(false);
           }
         }
       } catch {
-        if (!cancelled) setPollError(true);
+        if (!cancelled) setConnError(true);
       }
-      if (!cancelled) setTimeout(poll, POLL_INTERVAL_MS);
+      if (!cancelled) pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     }
 
-    const id = setTimeout(poll, POLL_INTERVAL_MS);
+    // --- SSE with exponential backoff, falls back to polling ---
+    function connectSSE() {
+      const es = new EventSource(`/api/orders/${workflowId}/stream`);
+
+      es.onmessage = (event) => {
+        if (cancelled) {
+          es.close();
+          return;
+        }
+        try {
+          const data = JSON.parse(event.data as string) as OrderStatusData & { error?: string };
+          if (data.error) {
+            es.close();
+            startPolling();
+            return;
+          }
+          retryCount = 0;
+          setState(data);
+          setConnError(false);
+          if (TERMINAL_STATUSES.has(data.status)) es.close();
+        } catch {
+          // ignore malformed event
+        }
+      };
+
+      es.onerror = () => {
+        es.close();
+        if (cancelled) return;
+        setConnError(true);
+        const delay = SSE_BACKOFF_MS[Math.min(retryCount, SSE_BACKOFF_MS.length - 1)];
+        retryCount++;
+        // After max retries fall back to polling permanently
+        if (retryCount > SSE_BACKOFF_MS.length) {
+          startPolling();
+        } else {
+          pollTimer = setTimeout(connectSSE, delay);
+        }
+      };
+    }
+
+    function startPolling() {
+      pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+    }
+
+    // Prefer SSE; if EventSource is unavailable (non-browser env) fall back immediately
+    if (typeof EventSource !== 'undefined') {
+      connectSSE();
+    } else {
+      startPolling();
+    }
 
     return () => {
       cancelled = true;
-      clearTimeout(id);
+      if (pollTimer) clearTimeout(pollTimer);
     };
   }, [state.status, workflowId]);
 
@@ -182,7 +235,7 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
         )}
       </header>
 
-      {pollError && (
+      {connError && (
         <div className="alert alert-warning" role="status">
           Connection to the server was lost. Retrying...
         </div>
