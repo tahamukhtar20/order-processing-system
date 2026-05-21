@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "NEXT_PRIVATE_SKIP_SWC_LOCK_CHECK=1 jest --forceExit"
+    "test": "jest --forceExit"
   },
   "dependencies": {
     "@temporalio/client": "^1.16.2",

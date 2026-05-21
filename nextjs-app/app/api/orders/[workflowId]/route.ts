@@ -7,10 +7,10 @@ import type { ProcessOrderResult, WorkflowStatus } from '@worker-types';
 // Proto temporal.api.enums.v1.WorkflowExecutionStatus numeric codes
 const WF = { RUNNING: 1, COMPLETED: 2, FAILED: 3, CANCELLED: 4, TIMED_OUT: 7 } as const;
 
-type Params = { params: Promise<{ workflowId: string }> };
+type Params = { params: { workflowId: string } };
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { workflowId } = await params;
+  const { workflowId } = params;
 
   try {
     const client = await getTemporalClient();

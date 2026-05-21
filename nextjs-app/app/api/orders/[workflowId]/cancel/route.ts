@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getTemporalClient } from '@/lib/temporal-client';
 
-type Params = { params: Promise<{ workflowId: string }> };
+type Params = { params: { workflowId: string } };
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const { workflowId } = await params;
+  const { workflowId } = params;
 
   try {
     const client = await getTemporalClient();
