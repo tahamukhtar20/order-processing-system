@@ -7,7 +7,6 @@ export default function Home() {
       <header className="bg-white shadow-sm">
         <div className="page-container py-5">
           <h1 className="heading-1">Order Processing System</h1>
-          <p className="subtitle mt-1">Powered by Temporal workflows</p>
         </div>
       </header>
 

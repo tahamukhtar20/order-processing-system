@@ -2,21 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: #171717;
+  background: #ffffff;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -64,7 +52,7 @@ body {
     @apply mt-1 text-xs text-red-600;
   }
 
-  /* Buttons — compose as `btn btn-primary` */
+  /* Buttons - compose as `btn btn-primary` */
   .btn {
     @apply rounded-md px-4 py-2 text-sm font-semibold shadow-sm
            focus:outline-none focus:ring-2 focus:ring-offset-2
@@ -77,11 +65,54 @@ body {
     @apply w-full;
   }
 
-  /* Alerts — compose as `alert alert-error` */
+  /* Buttons - additional variants */
+  .btn-secondary {
+    @apply bg-white text-gray-700 ring-1 ring-inset ring-gray-300
+           hover:bg-gray-50 focus:ring-gray-400;
+  }
+
+  /* Alerts - compose as `alert alert-error` */
   .alert {
     @apply rounded-md p-3 text-sm;
   }
   .alert-error {
     @apply bg-red-50 text-red-700;
+  }
+  .alert-warning {
+    @apply bg-amber-50 text-amber-800;
+  }
+
+  /* Badges - compose as `badge badge-running` */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-running {
+    @apply bg-blue-100 text-blue-800;
+  }
+  .badge-completed {
+    @apply bg-green-100 text-green-800;
+  }
+  .badge-failed {
+    @apply bg-red-100 text-red-800;
+  }
+  .badge-cancelled {
+    @apply bg-gray-100 text-gray-700;
+  }
+  .badge-pending {
+    @apply bg-gray-100 text-gray-500;
+  }
+
+  /* Helpers */
+  .muted {
+    @apply text-sm text-gray-500;
+  }
+  .divider {
+    @apply my-4 border-t border-gray-200;
+  }
+  .data-label {
+    @apply text-xs font-medium uppercase tracking-wide text-gray-500;
+  }
+  .data-value {
+    @apply text-sm text-gray-900;
   }
 }

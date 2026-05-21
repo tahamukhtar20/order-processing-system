@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['@temporalio/client', '@temporalio/common', '@temporalio/proto'],
+  experimental: {
+    serverComponentsExternalPackages: [
+      '@temporalio/client',
+      '@temporalio/common',
+      '@temporalio/proto',
+    ],
+  },
 };
 
 export default nextConfig;

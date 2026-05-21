@@ -1,0 +1,23 @@
+.summary {
+  @apply rounded-lg border border-green-200 bg-green-50/40 p-5;
+}
+
+.heading {
+  @apply mb-4 text-base font-semibold text-green-900;
+}
+
+.rows {
+  @apply grid grid-cols-[1fr_auto] gap-y-2 gap-x-6 text-sm;
+}
+
+.label {
+  @apply text-gray-600;
+}
+
+.value {
+  @apply text-right font-medium text-gray-900;
+}
+
+.total {
+  @apply mt-4 grid grid-cols-[1fr_auto] gap-x-6 border-t border-green-200 pt-4 text-base font-semibold text-gray-900;
+}
