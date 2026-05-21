@@ -25,10 +25,9 @@ function isRateLimited(ip: string): { limited: boolean; retryAfterMs: number } {
 
   // Evict expired entries to prevent unbounded map growth
   if (windows.size >= MAX_ENTRIES) {
-    for (const [key, entry] of windows) {
+    windows.forEach((entry, key) => {
       if (now >= entry.resetAt) windows.delete(key);
-      if (windows.size < MAX_ENTRIES) break;
-    }
+    });
   }
 
   const entry = windows.get(ip);
