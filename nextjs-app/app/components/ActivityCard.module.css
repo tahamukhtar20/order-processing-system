@@ -1,0 +1,59 @@
+.card {
+  @apply flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4;
+}
+
+.card[data-state='active'] {
+  @apply border-blue-200 bg-blue-50/30;
+}
+
+.card[data-state='failed'] {
+  @apply border-red-200 bg-red-50/30;
+}
+
+.card[data-state='skipped'] {
+  @apply opacity-60;
+}
+
+.indicator {
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold;
+}
+
+.indicator svg {
+  @apply h-5 w-5;
+}
+
+.card[data-state='pending'] .indicator {
+  @apply bg-gray-100 text-gray-400;
+}
+
+.card[data-state='active'] .indicator {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.card[data-state='done'] .indicator {
+  @apply bg-green-100 text-green-700;
+}
+
+.card[data-state='failed'] .indicator {
+  @apply bg-red-100 text-red-700;
+}
+
+.card[data-state='skipped'] .indicator {
+  @apply bg-gray-50 text-gray-300;
+}
+
+.spinner {
+  @apply h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600;
+}
+
+.body {
+  @apply min-w-0 flex-1;
+}
+
+.title {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.content {
+  @apply mt-2 space-y-1;
+}

@@ -55,7 +55,11 @@ describe('OrderForm', () => {
     await userEvent.type(screen.getByLabelText(/shipping address/i), '123 Main St, New York, NY');
     await userEvent.click(screen.getByRole('button', { name: /place order/i }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/orders/order-CUST-001-123'));
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/orders\/order-CUST-001-123\?p=/),
+      ),
+    );
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/orders',
       expect.objectContaining({ method: 'POST' }),

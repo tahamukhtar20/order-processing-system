@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
   }
 
   const input: ProcessOrderInput = parsed.data;
-  const workflowId = `order-${input.customerId}-${Date.now()}`;
+  const safeId = input.customerId.replace(/[^a-zA-Z0-9_-]/g, '-');
+  const workflowId = `order-${safeId}-${Date.now()}`;
 
   try {
     const client = await getTemporalClient();

@@ -68,7 +68,7 @@ export default function OrderForm({ products }: Props) {
           }
           return;
         }
-        router.push(`/orders/${data.workflowId}`);
+        router.push(`/orders/${data.workflowId}?p=${encodeURIComponent(productId)}`);
       } catch {
         setErrors({ submit: 'Network error. Please try again.' });
       } finally {
@@ -94,7 +94,7 @@ export default function OrderForm({ products }: Props) {
         >
           {products.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name} — ${p.unitPrice.toFixed(2)} ({p.stockLabel})
+              {p.name} - ${p.unitPrice.toFixed(2)} ({p.stockLabel})
             </option>
           ))}
         </select>
@@ -146,7 +146,7 @@ export default function OrderForm({ products }: Props) {
       </div>
 
       <button type="submit" disabled={submitting} className="btn btn-primary btn-block">
-        {submitting ? 'Placing order…' : 'Place Order'}
+        {submitting ? 'Placing order...' : 'Place Order'}
       </button>
     </form>
   );
