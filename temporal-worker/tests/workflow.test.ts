@@ -1,6 +1,8 @@
 import { TestWorkflowEnvironment } from '@temporalio/testing';
 import { Worker } from '@temporalio/worker';
 
+import type * as Activities from '../src/activities';
+
 import {
   cancelOrderSignal,
   getProgressQuery,
@@ -63,7 +65,7 @@ function workflowId(label: string): string {
   return `test-${label}-${Date.now()}`;
 }
 
-async function createWorker(mockActivities: object): Promise<Worker> {
+async function createWorker(mockActivities: Partial<typeof Activities>): Promise<Worker> {
   return Worker.create({
     connection: testEnv.nativeConnection,
     taskQueue: TASK_QUEUE,
@@ -92,18 +94,21 @@ describe('processOrderWorkflow', () => {
     });
   });
 
-  it('exposes progress via getProgressQuery during execution', async () => {
+  it('getProgressQuery returns 100 on completion', async () => {
     const worker = await createWorker(HAPPY_ACTIVITIES);
 
-    const result = (await worker.runUntil(
-      testEnv.client.workflow.execute(processOrderWorkflow, {
+    await worker.runUntil(async () => {
+      const handle = await testEnv.client.workflow.start(processOrderWorkflow, {
         taskQueue: TASK_QUEUE,
         workflowId: workflowId('progress'),
         args: [TEST_INPUT],
-      }),
-    )) as ProcessOrderResult;
+      });
 
-    expect(result).not.toMatchObject({ cancelled: true });
+      await handle.result();
+
+      const progress = (await handle.query(getProgressQuery)) as number;
+      expect(progress).toBe(100);
+    });
   });
 
   it('exposes completed status via getStatusQuery after execution', async () => {
