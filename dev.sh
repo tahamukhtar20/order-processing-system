@@ -18,20 +18,24 @@ WORKER_PID=""
 NEXT_PID=""
 
 cleanup() {
+  local exit_code=$?
   echo ""
   warn "Shutting down..."
   [[ -n "$WORKER_PID" ]] && kill "$WORKER_PID" 2>/dev/null && log "Stopped worker (PID $WORKER_PID)"
   [[ -n "$NEXT_PID"   ]] && kill "$NEXT_PID"   2>/dev/null && log "Stopped Next.js (PID $NEXT_PID)"
 
-  read -rp "$(echo -e "${YELLOW}[dev]${RESET} Stop Temporal Docker containers? [y/N] ")" stop_docker
-  if [[ "${stop_docker,,}" == "y" ]]; then
-    docker compose -f "$ROOT/docker-compose.temporal-only.yml" down
-    ok "Temporal stopped."
-  else
-    warn "Temporal left running. Stop it later with:"
-    warn "  docker compose -f docker-compose.temporal-only.yml down"
+  # Only prompt when running in an interactive terminal
+  if [[ -t 0 ]]; then
+    read -rp "$(echo -e "${YELLOW}[dev]${RESET} Stop Temporal Docker containers? [y/N] ")" stop_docker
+    if [[ "${stop_docker,,}" == "y" ]]; then
+      docker compose -f "$ROOT/docker-compose.temporal-only.yml" down
+      ok "Temporal stopped."
+    else
+      warn "Temporal left running. Stop it later with:"
+      warn "  docker compose -f docker-compose.temporal-only.yml down"
+    fi
   fi
-  exit 0
+  exit "$exit_code"
 }
 trap cleanup INT TERM EXIT
 

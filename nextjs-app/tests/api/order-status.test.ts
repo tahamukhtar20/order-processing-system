@@ -18,7 +18,7 @@ jest.mock('@/lib/temporal-client');
 jest.setTimeout(60_000);
 
 const TASK_QUEUE = 'test-order-status';
-const WORKFLOWS_PATH = path.resolve(__dirname, '../../../temporal-worker/src/workflows');
+const WORKFLOWS_PATH = path.resolve(__dirname, '../../../temporal-worker/src/workflows/index.ts');
 
 const TEST_INPUT = {
   productId: 'SKU-1001',

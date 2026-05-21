@@ -124,26 +124,30 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
     if (TERMINAL_STATUSES.has(state.status)) return;
 
     let cancelled = false;
-    const id = setInterval(async () => {
+
+    async function poll() {
       try {
         const res = await fetch(`/api/orders/${workflowId}`);
         if (!res.ok) {
           if (!cancelled) setPollError(true);
-          return;
-        }
-        const data = (await res.json()) as OrderStatusData;
-        if (!cancelled) {
-          setState(data);
-          setPollError(false);
+        } else {
+          const data = (await res.json()) as OrderStatusData;
+          if (!cancelled) {
+            setState(data);
+            setPollError(false);
+          }
         }
       } catch {
         if (!cancelled) setPollError(true);
       }
-    }, POLL_INTERVAL_MS);
+      if (!cancelled) setTimeout(poll, POLL_INTERVAL_MS);
+    }
+
+    const id = setTimeout(poll, POLL_INTERVAL_MS);
 
     return () => {
       cancelled = true;
-      clearInterval(id);
+      clearTimeout(id);
     };
   }, [state.status, workflowId]);
 
