@@ -25,3 +25,63 @@ body {
     text-wrap: balance;
   }
 }
+
+@layer components {
+  /* Layout */
+  .page {
+    @apply min-h-screen bg-gray-50;
+  }
+  .page-container {
+    @apply mx-auto max-w-2xl px-4;
+  }
+  .card {
+    @apply rounded-xl bg-white p-8 shadow;
+  }
+
+  /* Typography */
+  .heading-1 {
+    @apply text-2xl font-bold text-gray-900;
+  }
+  .heading-2 {
+    @apply text-lg font-semibold text-gray-800;
+  }
+  .subtitle {
+    @apply text-sm text-gray-500;
+  }
+
+  /* Form primitives */
+  .form-field {
+    @apply flex flex-col;
+  }
+  .form-label {
+    @apply mb-1 text-sm font-medium text-gray-700;
+  }
+  .form-input {
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm
+           focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500;
+  }
+  .field-error {
+    @apply mt-1 text-xs text-red-600;
+  }
+
+  /* Buttons — compose as `btn btn-primary` */
+  .btn {
+    @apply rounded-md px-4 py-2 text-sm font-semibold shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  }
+  .btn-block {
+    @apply w-full;
+  }
+
+  /* Alerts — compose as `alert alert-error` */
+  .alert {
+    @apply rounded-md p-3 text-sm;
+  }
+  .alert-error {
+    @apply bg-red-50 text-red-700;
+  }
+}
