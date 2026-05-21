@@ -1,9 +1,16 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import type { Product } from '@/lib/products';
+
+type ApiErrorPayload = {
+  workflowId?: string;
+  error?:
+    | string
+    | { fieldErrors?: Partial<Record<keyof FormErrors, string[]>>; formErrors?: string[] };
+};
 
 interface Props {
   products: Product[];
@@ -26,7 +33,7 @@ export default function OrderForm({ products }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const errs: FormErrors = {};
       if (!customerId.trim()) errs.customerId = 'Customer ID is required';
@@ -45,9 +52,20 @@ export default function OrderForm({ products }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId, quantity, customerId, customerAddress }),
         });
-        const data = (await res.json()) as { workflowId?: string; error?: string };
+        const data = (await res.json()) as ApiErrorPayload;
         if (!res.ok) {
-          setErrors({ submit: data.error ?? 'Failed to place order' });
+          if (data.error && typeof data.error === 'object' && data.error.fieldErrors) {
+            const fe = data.error.fieldErrors;
+            setErrors({
+              customerId: fe.customerId?.[0],
+              customerAddress: fe.customerAddress?.[0],
+              quantity: fe.quantity?.[0],
+            });
+          } else {
+            setErrors({
+              submit: typeof data.error === 'string' ? data.error : 'Failed to place order',
+            });
+          }
           return;
         }
         router.push(`/orders/${data.workflowId}`);

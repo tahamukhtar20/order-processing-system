@@ -8,7 +8,15 @@ const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 
 const mockFetch = jest.fn();
-global.fetch = mockFetch;
+const originalFetch = globalThis.fetch;
+
+beforeAll(() => {
+  globalThis.fetch = mockFetch as unknown as typeof fetch;
+});
+
+afterAll(() => {
+  globalThis.fetch = originalFetch;
+});
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -66,6 +74,26 @@ describe('OrderForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /place order/i }));
 
     expect(await screen.findByText(/failed to start order workflow/i)).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('maps Zod fieldErrors from the API into inline field errors', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        error: {
+          fieldErrors: { customerId: ['Customer ID is required'] },
+          formErrors: [],
+        },
+      }),
+    });
+    render(<OrderForm products={PRODUCTS} />);
+
+    await userEvent.type(screen.getByLabelText(/customer id/i), 'X');
+    await userEvent.type(screen.getByLabelText(/shipping address/i), '123 Main St');
+    await userEvent.click(screen.getByRole('button', { name: /place order/i }));
+
+    expect(await screen.findByText('Customer ID is required')).toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
   });
 
