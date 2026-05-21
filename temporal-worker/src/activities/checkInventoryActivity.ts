@@ -1,3 +1,4 @@
+import { ApplicationFailure } from '@temporalio/common';
 import { Context } from '@temporalio/activity';
 
 import { inventoryUnavailableError, unknownProductError } from '../shared/errors';
@@ -8,6 +9,13 @@ export async function checkInventoryActivity(
   input: CheckInventoryInput,
 ): Promise<CheckInventoryResult> {
   const { productId, quantity } = input;
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw ApplicationFailure.nonRetryable(
+      `Invalid quantity: ${quantity}. Must be a positive integer.`,
+      'InvalidInput',
+    );
+  }
 
   Context.current().heartbeat('checking inventory');
 

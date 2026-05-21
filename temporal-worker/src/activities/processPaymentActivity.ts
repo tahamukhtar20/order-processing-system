@@ -9,8 +9,8 @@ export async function processPaymentActivity(
 
   const totalAmount = Math.round(reservedQuantity * unitPrice * 100) / 100;
 
-  // env to configure failure rate
-  const failureRate = parseFloat(process.env['PAYMENT_FAILURE_RATE'] ?? '0.2');
+  const parsed = parseFloat(process.env['PAYMENT_FAILURE_RATE'] ?? '0.2');
+  const failureRate = Number.isNaN(parsed) ? 0.2 : Math.min(1, Math.max(0, parsed));
   const paymentSuccessful = Math.random() >= failureRate;
 
   if (!paymentSuccessful) {

@@ -56,16 +56,35 @@ describe('checkInventoryActivity', () => {
     expect(err).toBeInstanceOf(ApplicationFailure);
     expect((err as ApplicationFailure).nonRetryable).toBe(true);
   });
+
+  it('throws InvalidInput for zero or negative quantity', async () => {
+    const env = new MockActivityEnvironment();
+    await expect(
+      env.run(checkInventoryActivity, { productId: 'SKU-1001', quantity: 0 }),
+    ).rejects.toMatchObject({ type: 'InvalidInput' });
+  });
 });
 
 describe('processPaymentActivity', () => {
   const BASE_INPUT = { reservedQuantity: 3, unitPrice: 19.99, customerId: 'CUST-001' };
+  let originalFailureRate: string | undefined;
+
+  beforeEach(() => {
+    originalFailureRate = process.env['PAYMENT_FAILURE_RATE'];
+  });
+
+  afterEach(() => {
+    if (originalFailureRate === undefined) {
+      delete process.env['PAYMENT_FAILURE_RATE'];
+    } else {
+      process.env['PAYMENT_FAILURE_RATE'] = originalFailureRate;
+    }
+  });
 
   it('calculates totalAmount correctly', async () => {
     process.env['PAYMENT_FAILURE_RATE'] = '0';
     const env = new MockActivityEnvironment();
     const result = (await env.run(processPaymentActivity, BASE_INPUT)) as ProcessPaymentResult;
-    delete process.env['PAYMENT_FAILURE_RATE'];
     expect(result.totalAmount).toBe(59.97);
   });
 
@@ -73,7 +92,6 @@ describe('processPaymentActivity', () => {
     process.env['PAYMENT_FAILURE_RATE'] = '0';
     const env = new MockActivityEnvironment();
     const result = (await env.run(processPaymentActivity, BASE_INPUT)) as ProcessPaymentResult;
-    delete process.env['PAYMENT_FAILURE_RATE'];
     expect(result.paymentSuccessful).toBe(true);
     expect(result.transactionId).toMatch(/^TXN-/);
   });
@@ -86,7 +104,6 @@ describe('processPaymentActivity', () => {
       unitPrice: 9.99,
       customerId: 'CUST-001',
     })) as ProcessPaymentResult;
-    delete process.env['PAYMENT_FAILURE_RATE'];
     expect(result.paymentSuccessful).toBe(false);
     expect(result.transactionId).toBe('');
     expect(result.totalAmount).toBe(9.99);

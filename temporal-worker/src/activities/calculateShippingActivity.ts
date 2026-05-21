@@ -6,11 +6,13 @@ const REMOTE_SURCHARGE = 10.0;
 const REMOTE_PATTERNS = [/\bAK\b/, /\bHI\b/, /\bPR\b/];
 
 function addBusinessDays(from: Date, days: number): Date {
-  const date = new Date(from);
+  // Work in UTC throughout to avoid local-timezone day shifts when formatting
+  const ms = from.getTime();
+  const date = new Date(ms);
   let added = 0;
   while (added < days) {
-    date.setDate(date.getDate() + 1);
-    const dow = date.getDay();
+    date.setUTCDate(date.getUTCDate() + 1);
+    const dow = date.getUTCDay();
     if (dow !== 0 && dow !== 6) added++;
   }
   return date;
