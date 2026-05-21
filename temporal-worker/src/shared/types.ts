@@ -40,11 +40,13 @@ export interface ProcessOrderInput {
   customerAddress: string;
 }
 
-export interface ProcessOrderResult {
-  inventory: CheckInventoryResult;
-  payment: ProcessPaymentResult;
-  shipping: CalculateShippingResult;
-}
+export type ProcessOrderResult =
+  | { cancelled: true }
+  | {
+      inventory: CheckInventoryResult;
+      payment: ProcessPaymentResult;
+      shipping: CalculateShippingResult;
+    };
 
 export type WorkflowPhase =
   | 'pending'

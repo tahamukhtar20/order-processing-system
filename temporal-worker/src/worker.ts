@@ -12,6 +12,7 @@ async function run(): Promise<void> {
       connection,
       namespace: 'default',
       taskQueue: TASK_QUEUE,
+      workflowsPath: require.resolve('./workflows'),
       activities,
     });
 
