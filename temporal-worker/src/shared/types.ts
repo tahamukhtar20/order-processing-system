@@ -33,8 +33,6 @@ export interface CalculateShippingResult {
   finalTotal: number;
 }
 
-// ─── Workflow I/O ─────────────────────────────────────────────────────────────
-
 export interface ProcessOrderInput {
   productId: string;
   quantity: number;

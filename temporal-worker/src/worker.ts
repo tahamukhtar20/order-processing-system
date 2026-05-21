@@ -1,5 +1,7 @@
 import { NativeConnection, Worker } from '@temporalio/worker';
 
+import * as activities from './activities';
+
 const TASK_QUEUE = 'order-processing';
 const TEMPORAL_ADDRESS = process.env['TEMPORAL_ADDRESS'] ?? 'localhost:7233';
 
@@ -10,7 +12,7 @@ async function run(): Promise<void> {
       connection,
       namespace: 'default',
       taskQueue: TASK_QUEUE,
-      activities: {},
+      activities,
     });
 
     console.log(`Worker started, polling '${TASK_QUEUE}' on ${TEMPORAL_ADDRESS}`);
