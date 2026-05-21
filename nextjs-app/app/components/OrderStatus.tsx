@@ -127,6 +127,7 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
     let cancelled = false;
     let retryCount = 0;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let activeES: EventSource | null = null;
 
     // --- polling fallback (used when SSE is unavailable) ---
     async function poll() {
@@ -150,6 +151,7 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
     // --- SSE with exponential backoff, falls back to polling ---
     function connectSSE() {
       const es = new EventSource(`/api/orders/${workflowId}/stream`);
+      activeES = es;
 
       es.onmessage = (event) => {
         if (cancelled) {
@@ -160,13 +162,17 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
           const data = JSON.parse(event.data as string) as OrderStatusData & { error?: string };
           if (data.error) {
             es.close();
+            activeES = null;
             startPolling();
             return;
           }
           retryCount = 0;
           setState(data);
           setConnError(false);
-          if (TERMINAL_STATUSES.has(data.status)) es.close();
+          if (TERMINAL_STATUSES.has(data.status)) {
+            es.close();
+            activeES = null;
+          }
         } catch {
           // ignore malformed event
         }
@@ -174,6 +180,7 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
 
       es.onerror = () => {
         es.close();
+        activeES = null;
         if (cancelled) return;
         setConnError(true);
         const delay = SSE_BACKOFF_MS[Math.min(retryCount, SSE_BACKOFF_MS.length - 1)];
@@ -201,6 +208,10 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
     return () => {
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
+      if (activeES) {
+        activeES.close();
+        activeES = null;
+      }
     };
   }, [state.status, workflowId]);
 

@@ -9,8 +9,9 @@ const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMED_OUT']);
 
 type Params = { params: { workflowId: string } };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
   const { workflowId } = params;
+  const { signal } = req;
 
   const encoder = new TextEncoder();
 
@@ -18,19 +19,35 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
   }
 
+  let cancelled = signal.aborted;
+  signal.addEventListener(
+    'abort',
+    () => {
+      cancelled = true;
+    },
+    { once: true },
+  );
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        while (true) {
+        while (!cancelled) {
           let status;
           try {
             status = await getOrderStatus(workflowId);
           } catch (e) {
-            if (e instanceof OrderNotFoundError) {
-              controller.enqueue(sseEvent({ error: 'not_found' }));
-            } else {
-              controller.enqueue(sseEvent({ error: 'server_error' }));
+            if (!cancelled) {
+              if (e instanceof OrderNotFoundError) {
+                controller.enqueue(sseEvent({ error: 'not_found' }));
+              } else {
+                controller.enqueue(sseEvent({ error: 'server_error' }));
+              }
             }
+            controller.close();
+            return;
+          }
+
+          if (cancelled) {
             controller.close();
             return;
           }
@@ -44,9 +61,13 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
           await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
         }
+        controller.close();
       } catch {
         controller.close();
       }
+    },
+    cancel() {
+      cancelled = true;
     },
   });
 

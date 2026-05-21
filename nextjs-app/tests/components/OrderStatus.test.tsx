@@ -139,6 +139,7 @@ describe('OrderStatus', () => {
       set onerror(_fn: unknown) {},
       close: closeSSE,
     }));
+    const originalES = (globalThis as Record<string, unknown>).EventSource;
     Object.defineProperty(globalThis, 'EventSource', {
       value: MockES,
       writable: true,
@@ -164,7 +165,7 @@ describe('OrderStatus', () => {
       expect(screen.getByText('Completed')).toBeInTheDocument();
     } finally {
       Object.defineProperty(globalThis, 'EventSource', {
-        value: undefined,
+        value: originalES,
         writable: true,
         configurable: true,
       });
@@ -180,6 +181,7 @@ describe('OrderStatus', () => {
       },
       close: jest.fn(),
     }));
+    const originalES = (globalThis as Record<string, unknown>).EventSource;
     Object.defineProperty(globalThis, 'EventSource', {
       value: MockES,
       writable: true,
@@ -211,7 +213,7 @@ describe('OrderStatus', () => {
     } finally {
       jest.useRealTimers();
       Object.defineProperty(globalThis, 'EventSource', {
-        value: undefined,
+        value: originalES,
         writable: true,
         configurable: true,
       });
