@@ -128,6 +128,98 @@ describe('OrderStatus', () => {
     }
   });
 
+  it('uses SSE when EventSource is available and updates state on message', async () => {
+    type SSEHandler = ((e: MessageEvent) => void) | null;
+    let onmessage: SSEHandler = null;
+    const closeSSE = jest.fn();
+    const MockES = jest.fn().mockImplementation(() => ({
+      set onmessage(fn: SSEHandler) {
+        onmessage = fn;
+      },
+      set onerror(_fn: unknown) {},
+      close: closeSSE,
+    }));
+    const originalES = (globalThis as Record<string, unknown>).EventSource;
+    Object.defineProperty(globalThis, 'EventSource', {
+      value: MockES,
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      render(
+        <OrderStatus
+          workflowId={runningInitial.workflowId}
+          initialState={runningInitial}
+          productId="SKU-1001"
+        />,
+      );
+
+      expect(MockES).toHaveBeenCalledWith(`/api/orders/${runningInitial.workflowId}/stream`);
+      expect(screen.getByText('Running')).toBeInTheDocument();
+
+      await act(async () => {
+        onmessage?.({ data: JSON.stringify(completedInitial) } as MessageEvent);
+      });
+
+      expect(screen.getByText('Completed')).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(globalThis, 'EventSource', {
+        value: originalES,
+        writable: true,
+        configurable: true,
+      });
+    }
+  });
+
+  it('falls back to polling when SSE errors after max retries', async () => {
+    let onerror: ((e: Event) => void) | null = null;
+    const MockES = jest.fn().mockImplementation(() => ({
+      set onmessage(_fn: unknown) {},
+      set onerror(fn: (e: Event) => void) {
+        onerror = fn;
+      },
+      close: jest.fn(),
+    }));
+    const originalES = (globalThis as Record<string, unknown>).EventSource;
+    Object.defineProperty(globalThis, 'EventSource', {
+      value: MockES,
+      writable: true,
+      configurable: true,
+    });
+    mockFetch.mockResolvedValue({ ok: true, json: async () => completedInitial });
+
+    jest.useFakeTimers();
+    try {
+      render(
+        <OrderStatus
+          workflowId={runningInitial.workflowId}
+          initialState={runningInitial}
+          productId="SKU-1001"
+        />,
+      );
+
+      // Exhaust all SSE retries
+      for (let i = 0; i <= 4; i++) {
+        await act(async () => {
+          onerror?.(new Event('error'));
+        });
+        await act(async () => {
+          jest.runAllTimers();
+        });
+      }
+
+      await waitFor(() => expect(screen.getByText('Completed')).toBeInTheDocument());
+    } finally {
+      jest.useRealTimers();
+      Object.defineProperty(globalThis, 'EventSource', {
+        value: originalES,
+        writable: true,
+        configurable: true,
+      });
+    }
+  });
+
   it('calls cancel endpoint when cancel button is clicked', async () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
     const user = userEvent.setup();
