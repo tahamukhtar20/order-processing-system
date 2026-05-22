@@ -63,6 +63,21 @@ export class OrderNotFoundError extends Error {
   }
 }
 
+type KV = Record<string, unknown>;
+
+// Unwraps WorkflowFailedError -> ActivityFailure -> ApplicationFailure.
+// Temporal wraps app errors one or two levels deep depending on whether the
+// failure originated inside an activity (adds an ActivityFailure wrapper).
+function extractAppFailure(e: unknown): { appLike?: KV; wfCause?: KV } {
+  if (!(e instanceof WorkflowFailedError)) return {};
+  const wfCause = e.cause as KV | undefined;
+  if (!wfCause) return {};
+  if (typeof wfCause['type'] === 'string') return { appLike: wfCause, wfCause };
+  const inner = wfCause['cause'] as KV | undefined;
+  if (inner && typeof inner['type'] === 'string') return { appLike: inner, wfCause };
+  return { wfCause };
+}
+
 export async function getOrderStatus(workflowId: string): Promise<OrderStatusData> {
   const client = await getTemporalClient();
   const handle = client.workflow.getHandle(workflowId);
@@ -103,25 +118,13 @@ export async function getOrderStatus(workflowId: string): Promise<OrderStatusDat
     await handle.result();
     return { workflowId, status: mappedStatus, phase: 'failed', progress: 100 };
   } catch (e) {
-    const wfCause =
-      e instanceof WorkflowFailedError
-        ? (e.cause as unknown as Record<string, unknown>)
-        : undefined;
-    const appLike =
-      wfCause && typeof wfCause['type'] === 'string'
-        ? wfCause
-        : wfCause &&
-            typeof (wfCause['cause'] as Record<string, unknown> | undefined)?.['type'] === 'string'
-          ? (wfCause['cause'] as Record<string, unknown>)
-          : undefined;
+    const { appLike, wfCause } = extractAppFailure(e);
     return {
       workflowId,
       status: mappedStatus,
       phase: 'failed',
       progress: 100,
-      error: (appLike?.['message'] ??
-        (wfCause as Record<string, unknown> | undefined)?.['message'] ??
-        String(e)) as string,
+      error: (appLike?.['message'] ?? wfCause?.['message'] ?? String(e)) as string,
       errorType: appLike?.['type'] as string | undefined,
     };
   }

@@ -49,7 +49,6 @@ export async function processOrderWorkflow(input: ProcessOrderInput): Promise<Pr
     return { cancelled: true };
   }
 
-  // Activity 1: Check Inventory
   status.phase = 'checking-inventory';
   status.progress = 10;
 
@@ -69,7 +68,6 @@ export async function processOrderWorkflow(input: ProcessOrderInput): Promise<Pr
     return { cancelled: true };
   }
 
-  // Activity 2: Process Payment
   status.phase = 'processing-payment';
   status.progress = 40;
 
@@ -93,7 +91,6 @@ export async function processOrderWorkflow(input: ProcessOrderInput): Promise<Pr
     return { cancelled: true };
   }
 
-  // Activity 3 (via child workflow): Calculate Shipping
   status.phase = 'calculating-shipping';
   status.progress = 75;
 
