@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// In-memory fixed-window rate limiter (per IP, window resets WINDOW_MS after
-// the first request in a window). Edge runtime keeps this map alive across
-// requests within the same isolate.
-//
-// Trust note: IP is read from x-forwarded-for / x-real-ip. These are only
-// reliable when your deployment sits behind a trusted reverse proxy (e.g.
-// Vercel, nginx) that overwrites these headers. Without that, clients can
-// spoof the IP to bypass the limit. For self-hosted setups, ensure the proxy
-// strips / rewrites forwarded headers before they reach this middleware.
+// Fixed-window rate limiter. IP is derived from x-forwarded-for / x-real-ip,
+// which are only trustworthy behind a reverse proxy that rewrites them (Vercel,
+// nginx). Without that, clients can spoof the IP to bypass the limit.
 const RATE_LIMIT = 10; // max POST /api/orders per window
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_ENTRIES = 10_000; // evict oldest when map grows beyond this
@@ -23,7 +17,6 @@ const windows = new Map<string, WindowEntry>();
 function isRateLimited(ip: string): { limited: boolean; retryAfterMs: number } {
   const now = Date.now();
 
-  // Evict expired entries to prevent unbounded map growth
   if (windows.size >= MAX_ENTRIES) {
     windows.forEach((entry, key) => {
       if (now >= entry.resetAt) windows.delete(key);
@@ -50,7 +43,6 @@ export function middleware(req: NextRequest) {
   const res = NextResponse.next();
   res.headers.set('x-request-id', requestId);
 
-  // Rate-limit POST /api/orders only
   if (req.method === 'POST' && req.nextUrl.pathname === '/api/orders') {
     const ip =
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??

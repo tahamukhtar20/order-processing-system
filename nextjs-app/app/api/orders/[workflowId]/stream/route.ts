@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 
+import { TERMINAL_STATUSES } from '@/lib/constants';
 import { getOrderStatus, OrderNotFoundError } from '@/lib/order-status';
 
 export const dynamic = 'force-dynamic';
 
 const POLL_INTERVAL_MS = 800;
-const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMED_OUT']);
 
 type Params = { params: { workflowId: string } };
 

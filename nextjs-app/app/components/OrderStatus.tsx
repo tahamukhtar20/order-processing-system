@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { TERMINAL_STATUSES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/format';
 import type { OrderStatusData } from '@/lib/order-status';
 import type {
@@ -15,7 +16,6 @@ import ErrorBanner from './ErrorBanner';
 import OrderSummary from './OrderSummary';
 
 const POLL_INTERVAL_MS = 1000;
-const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMED_OUT']);
 const SSE_BACKOFF_MS = [1000, 2000, 4000, 8000];
 
 interface Props {
@@ -76,7 +76,6 @@ function deriveActivities(status: OrderStatusData): DerivedActivities {
     };
   }
 
-  // FAILED / TIMED_OUT - derive from errorType
   switch (status.errorType) {
     case 'InventoryUnavailable':
     case 'UnknownProduct':
@@ -129,7 +128,6 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
     let activeES: EventSource | null = null;
 
-    // --- polling fallback (used when SSE is unavailable) ---
     async function poll() {
       try {
         const res = await fetch(`/api/orders/${workflowId}`);
@@ -138,7 +136,13 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
         } else {
           const data = (await res.json()) as OrderStatusData;
           if (!cancelled) {
-            setState(data);
+            setState((prev) =>
+              prev.status === data.status &&
+              prev.phase === data.phase &&
+              prev.progress === data.progress
+                ? prev
+                : data,
+            );
             setConnError(false);
           }
         }
@@ -148,7 +152,6 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
       if (!cancelled) pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     }
 
-    // --- SSE with exponential backoff, falls back to polling ---
     function connectSSE() {
       const es = new EventSource(`/api/orders/${workflowId}/stream`);
       activeES = es;
@@ -167,7 +170,13 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
             return;
           }
           retryCount = 0;
-          setState(data);
+          setState((prev) =>
+            prev.status === data.status &&
+            prev.phase === data.phase &&
+            prev.progress === data.progress
+              ? prev
+              : data,
+          );
           setConnError(false);
           if (TERMINAL_STATUSES.has(data.status)) {
             es.close();
@@ -185,7 +194,6 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
         setConnError(true);
         const delay = SSE_BACKOFF_MS[Math.min(retryCount, SSE_BACKOFF_MS.length - 1)];
         retryCount++;
-        // After max retries fall back to polling permanently
         if (retryCount > SSE_BACKOFF_MS.length) {
           startPolling();
         } else {
@@ -198,7 +206,6 @@ export default function OrderStatus({ workflowId, initialState, productId }: Pro
       pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     }
 
-    // Prefer SSE; if EventSource is unavailable (non-browser env) fall back immediately
     if (typeof EventSource !== 'undefined') {
       connectSSE();
     } else {
