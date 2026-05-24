@@ -12,6 +12,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 
+# Copy workspace manifests so Next.js detects the monorepo and produces a
+# nested standalone (nextjs-app/server.js) rather than a flat one.
+COPY package.json package-lock.json ./
+COPY temporal-worker/package.json ./temporal-worker/
+
 # Copy nextjs-app source and the shared types it depends on via @worker-types alias
 COPY nextjs-app/ ./nextjs-app/
 COPY temporal-worker/src/shared/ ./temporal-worker/src/shared/
