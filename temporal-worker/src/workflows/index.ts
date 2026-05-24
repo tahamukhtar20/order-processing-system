@@ -2,6 +2,6 @@ export {
   cancelOrderSignal,
   getProgressQuery,
   getStatusQuery,
-  ProcessOrderWorkflow,
+  processOrderWorkflow,
 } from './processOrderWorkflow';
 export { shippingChildWorkflow } from './shippingChildWorkflow';

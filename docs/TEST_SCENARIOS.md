@@ -142,7 +142,7 @@ Verify the system handles temporary connectivity loss between Temporal, the work
 
 - The status page's SSE connection drops; `GET /api/orders/[workflowId]` starts returning 503 because the Next.js API cannot reach Temporal.
 - The UI shows a yellow "Connection to the server was lost. Retrying..." banner.
-- SSE reconnect attempts continue with exponential backoff (1s -> 2s -> 4s -> 8s); after four failures the client falls back to polling.
+- SSE reconnect attempts continue with exponential backoff (1s -> 2s -> 4s -> 8s); if all four reconnect attempts fail, the next error triggers the polling fallback.
 - Run `docker start temporal`.
 - Within a few seconds the next poll succeeds, the banner clears, and the workflow state resumes updating.
 

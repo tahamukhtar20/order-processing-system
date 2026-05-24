@@ -20,7 +20,7 @@ Temporal Server
   |  task queue: order-processing
   v
 Temporal Worker
-  +-- ProcessOrderWorkflow
+  +-- processOrderWorkflow
         +-- checkInventoryActivity
         +-- processPaymentActivity
         +-- shippingChildWorkflow
@@ -41,7 +41,7 @@ Temporal was chosen over a plain async queue or saga pattern for three reasons:
 
 ## Workflow design
 
-### `ProcessOrderWorkflow`
+### `processOrderWorkflow`
 
 Three activities run sequentially:
 

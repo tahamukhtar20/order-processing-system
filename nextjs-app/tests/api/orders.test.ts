@@ -65,10 +65,13 @@ describe('POST /api/orders', () => {
     const body = await res.json();
     expect(body.workflowId).toMatch(/^order-CUST-001-\d+$/);
     expect(mockStart).toHaveBeenCalledWith(
-      'ProcessOrderWorkflow',
+      'processOrderWorkflow',
       expect.objectContaining({
         taskQueue: 'order-processing',
         args: [validBody],
+        workflowExecutionTimeout: '5 minutes',
+        workflowRunTimeout: '2 minutes',
+        workflowTaskTimeout: '10 seconds',
       }),
     );
   });

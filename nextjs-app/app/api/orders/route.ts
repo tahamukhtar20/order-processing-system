@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const client = await getTemporalClient();
-    await client.workflow.start('ProcessOrderWorkflow', {
+    await client.workflow.start('processOrderWorkflow', {
       taskQueue: 'order-processing',
       workflowId,
       args: [input],

@@ -7,7 +7,7 @@ import {
   cancelOrderSignal,
   getProgressQuery,
   getStatusQuery,
-  ProcessOrderWorkflow,
+  processOrderWorkflow,
 } from '../src/workflows/processOrderWorkflow';
 import type {
   CalculateShippingResult,
@@ -74,12 +74,12 @@ async function createWorker(mockActivities: Partial<typeof Activities>): Promise
   });
 }
 
-describe('ProcessOrderWorkflow', () => {
+describe('processOrderWorkflow', () => {
   it('completes successfully on happy path', async () => {
     const worker = await createWorker(HAPPY_ACTIVITIES);
 
     const result = (await worker.runUntil(
-      testEnv.client.workflow.execute(ProcessOrderWorkflow, {
+      testEnv.client.workflow.execute(processOrderWorkflow, {
         taskQueue: TASK_QUEUE,
         workflowId: workflowId('happy'),
         args: [TEST_INPUT],
@@ -98,7 +98,7 @@ describe('ProcessOrderWorkflow', () => {
     const worker = await createWorker(HAPPY_ACTIVITIES);
 
     await worker.runUntil(async () => {
-      const handle = await testEnv.client.workflow.start(ProcessOrderWorkflow, {
+      const handle = await testEnv.client.workflow.start(processOrderWorkflow, {
         taskQueue: TASK_QUEUE,
         workflowId: workflowId('progress'),
         args: [TEST_INPUT],
@@ -116,7 +116,7 @@ describe('ProcessOrderWorkflow', () => {
 
     // Query must happen while the worker is still running (queries need a live worker)
     await worker.runUntil(async () => {
-      const handle = await testEnv.client.workflow.start(ProcessOrderWorkflow, {
+      const handle = await testEnv.client.workflow.start(processOrderWorkflow, {
         taskQueue: TASK_QUEUE,
         workflowId: workflowId('status-query'),
         args: [TEST_INPUT],
@@ -149,7 +149,7 @@ describe('ProcessOrderWorkflow', () => {
     // Activity errors are wrapped: WorkflowFailedError.cause = ActivityFailure.cause = ApplicationFailure
     await expect(
       worker.runUntil(
-        testEnv.client.workflow.execute(ProcessOrderWorkflow, {
+        testEnv.client.workflow.execute(processOrderWorkflow, {
           taskQueue: TASK_QUEUE,
           workflowId: workflowId('inventory-fail'),
           args: [TEST_INPUT],
@@ -170,7 +170,7 @@ describe('ProcessOrderWorkflow', () => {
 
     await expect(
       worker.runUntil(
-        testEnv.client.workflow.execute(ProcessOrderWorkflow, {
+        testEnv.client.workflow.execute(processOrderWorkflow, {
           taskQueue: TASK_QUEUE,
           workflowId: workflowId('payment-fail'),
           args: [TEST_INPUT],
@@ -181,7 +181,7 @@ describe('ProcessOrderWorkflow', () => {
 
   it('cancels gracefully when cancelOrderSignal is received before execution', async () => {
     // Signal before the worker starts so cancellation is in the event history on first task
-    const handle = await testEnv.client.workflow.start(ProcessOrderWorkflow, {
+    const handle = await testEnv.client.workflow.start(processOrderWorkflow, {
       taskQueue: TASK_QUEUE,
       workflowId: workflowId('cancel'),
       args: [TEST_INPUT],
