@@ -31,7 +31,7 @@ export const getStatusQuery = defineQuery<WorkflowStatus>('getStatus');
 export const getProgressQuery = defineQuery<number>('getProgress');
 export const cancelOrderSignal = defineSignal('cancelOrder');
 
-export async function processOrderWorkflow(input: ProcessOrderInput): Promise<ProcessOrderResult> {
+export async function ProcessOrderWorkflow(input: ProcessOrderInput): Promise<ProcessOrderResult> {
   const { productId, quantity, customerId, customerAddress } = input;
 
   let cancelRequested = false;

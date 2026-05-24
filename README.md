@@ -1,6 +1,6 @@
 # Order Processing System
 
-A full-stack order processing application built with **Temporal** (durable workflow orchestration) and **Next.js 14** (App Router, SSR, SSE).
+A full-stack order processing application built with **Temporal** (durable workflow orchestration) and **Next.js** (App Router, SSR, SSE).
 
 ---
 
@@ -17,7 +17,7 @@ A full-stack order processing application built with **Temporal** (durable workf
 ```
 order-processing-system/
 +-- temporal-worker/      # Temporal workflow + activities (Node.js)
-+-- nextjs-app/           # Next.js 14 full-stack app (UI + API routes)
++-- nextjs-app/           # Next.js full-stack app (UI + API routes)
 +-- docs/
 |   +-- ARCHITECTURE.md   # Design decisions and system overview
 |   +-- API.md            # Full API reference

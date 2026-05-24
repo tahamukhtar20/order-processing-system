@@ -117,9 +117,9 @@ curl -s -X POST http://localhost:3000/api/orders \
 
 ---
 
-## Scenario 4 - Order Cancellation
+## Scenario 4 - Network Issues / Resilience
 
-Cancel a running workflow before it completes.
+Verify the system handles temporary connectivity loss between Temporal, the worker, and the Next.js app without losing work.
 
 **Input**
 
@@ -130,24 +130,49 @@ Cancel a running workflow before it completes.
 | Customer ID | CUST-004                |
 | Address     | 321 Elm St, Seattle, WA |
 
+### Part A - Temporal goes offline mid-request
+
 **Steps**
 
-1. Submit the order via the UI
-2. While the status page shows `Running`, click **Cancel order**
-3. The app posts to `POST /api/orders/[workflowId]/cancel`
+1. Submit an order normally.
+2. Immediately stop Temporal: `docker stop temporal` (or stop the Temporal process if running locally).
+3. Observe the status page.
 
 **Expected flow**
 
-- Workflow receives the `cancelOrder` signal
-- At the next cancel checkpoint it returns `{ cancelled: true }`
-- Status transitions to `COMPLETED` with phase `cancelled`
-- UI shows the Cancelled badge and a "Your order was cancelled" message
+- The status page's SSE connection drops; `GET /api/orders/[workflowId]` starts returning 503 because the Next.js API cannot reach Temporal.
+- The UI shows a yellow "Connection to the server was lost. Retrying..." banner.
+- SSE reconnect attempts continue with exponential backoff (1s -> 2s -> 4s -> 8s); after four failures the client falls back to polling.
+- Run `docker start temporal`.
+- Within a few seconds the next poll succeeds, the banner clears, and the workflow state resumes updating.
 
 **Verify**
 
-- Status badge reads "Cancelled" (grey)
-- All activity cards show as skipped
-- `GET /api/orders/[workflowId]` returns `result: { cancelled: true }`
-- Temporal UI shows `Completed` (cancellation is a graceful completion, not a failure)
+- No browser refresh is required to recover.
+- The workflow's event history in the Temporal UI is intact (no events lost).
 
-**Note:** To reliably observe the cancellation window, add a temporary `sleep` to `checkInventoryActivity` during local testing, or cancel immediately after submitting.
+### Part B - Worker goes offline mid-workflow
+
+This demonstrates Temporal's durability guarantee: when no worker is available to execute the next activity, the workflow pauses rather than failing, and resumes exactly where it left off when a worker comes back online.
+
+**Steps**
+
+1. Submit an order.
+2. While the workflow is still running, stop the worker: `docker stop order-worker` (or Ctrl+C the worker process).
+3. The status page should still load and show the current phase, but no progress is made.
+4. Wait a few seconds. The workflow stays in its last known phase.
+5. Restart the worker: `docker start order-worker` (or `npm run dev` again).
+6. The workflow continues from the next activity it had not yet started.
+
+**Expected flow**
+
+- Completed activities are NOT re-executed (Temporal replays the workflow from event history, skipping completed steps).
+- The order eventually completes with the normal happy-path result.
+
+**Verify**
+
+- Temporal UI shows the workflow's event history with a gap where the worker was offline.
+- No duplicate inventory reservations or payment transactions.
+- The activity that was in flight at the time the worker died is retried per the configured retry policy when the worker resumes.
+
+**Note:** To create a longer observation window for either part, temporarily add `await new Promise(r => setTimeout(r, 10_000))` to one of the activities before recording or testing.

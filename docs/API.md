@@ -188,18 +188,24 @@ Send a `cancelOrder` signal to a running workflow. The workflow will complete wi
 
 ## GET `/api/orders/[workflowId]/history`
 
-Returns a simplified list of Temporal workflow history events.
+Returns a simplified list of Temporal workflow history events. `eventType` is the raw protobuf enum integer; see the [Temporal `EventType` enum](https://api-docs.temporal.io/#enum-temporal.api.enums.v1.EventType) for the mapping (e.g. `1` is `WorkflowExecutionStarted`, `5` is `WorkflowTaskScheduled`).
 
 ### Response `200 OK`
 
 ```json
 {
+  "workflowId": "order-CUST-001-1716384000000",
+  "eventCount": 12,
   "events": [
-    { "eventId": 1, "eventType": "WorkflowExecutionStarted", "timestamp": "2026-05-22T10:00:00Z" },
-    { "eventId": 2, "eventType": "WorkflowTaskScheduled", "timestamp": "2026-05-22T10:00:00Z" }
+    { "eventId": "1", "eventType": 1 },
+    { "eventId": "2", "eventType": 5 }
   ]
 }
 ```
+
+### Response `404 Not Found`
+
+When the workflow does not exist.
 
 ---
 

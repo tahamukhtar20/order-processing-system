@@ -65,7 +65,7 @@ describe('POST /api/orders', () => {
     const body = await res.json();
     expect(body.workflowId).toMatch(/^order-CUST-001-\d+$/);
     expect(mockStart).toHaveBeenCalledWith(
-      'processOrderWorkflow',
+      'ProcessOrderWorkflow',
       expect.objectContaining({
         taskQueue: 'order-processing',
         args: [validBody],

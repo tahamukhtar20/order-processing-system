@@ -78,7 +78,7 @@ describe('getOrderStatus', () => {
     const id = wfId('completed');
 
     await worker.runUntil(
-      testEnv.client.workflow.execute('processOrderWorkflow', {
+      testEnv.client.workflow.execute('ProcessOrderWorkflow', {
         taskQueue: TASK_QUEUE,
         workflowId: id,
         args: [TEST_INPUT],
@@ -112,7 +112,7 @@ describe('getOrderStatus', () => {
 
     await worker.runUntil(
       testEnv.client.workflow
-        .execute('processOrderWorkflow', {
+        .execute('ProcessOrderWorkflow', {
           taskQueue: TASK_QUEUE,
           workflowId: id,
           args: [TEST_INPUT],
@@ -142,7 +142,7 @@ describe('getOrderStatus', () => {
 
     await worker.runUntil(
       testEnv.client.workflow
-        .execute('processOrderWorkflow', {
+        .execute('ProcessOrderWorkflow', {
           taskQueue: TASK_QUEUE,
           workflowId: id,
           args: [TEST_INPUT],
