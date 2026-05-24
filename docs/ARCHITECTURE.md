@@ -5,7 +5,7 @@
 The system is a full-stack order processing application built on two independently deployable services:
 
 - **`temporal-worker`** - a Node.js process that connects to Temporal and executes workflow and activity logic.
-- **`nextjs-app`** - a Next.js 14 App Router application that serves the UI and exposes a REST/SSE API consumed by the frontend.
+- **`nextjs-app`** - a Next.js App Router application that serves the UI and exposes a REST/SSE API consumed by the frontend.
 
 A Temporal server (self-hosted via Docker) acts as the durable execution engine between them.
 

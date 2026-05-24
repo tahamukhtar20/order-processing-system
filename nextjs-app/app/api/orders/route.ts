@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
       taskQueue: 'order-processing',
       workflowId,
       args: [input],
+      workflowExecutionTimeout: '5 minutes',
+      workflowRunTimeout: '2 minutes',
+      workflowTaskTimeout: '10 seconds',
     });
     return NextResponse.json({ workflowId }, { status: 201 });
   } catch (e) {

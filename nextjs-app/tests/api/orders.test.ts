@@ -69,6 +69,9 @@ describe('POST /api/orders', () => {
       expect.objectContaining({
         taskQueue: 'order-processing',
         args: [validBody],
+        workflowExecutionTimeout: '5 minutes',
+        workflowRunTimeout: '2 minutes',
+        workflowTaskTimeout: '10 seconds',
       }),
     );
   });
