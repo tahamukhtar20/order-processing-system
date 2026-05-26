@@ -31,9 +31,10 @@ services:
       - POSTGRES_SEEDS=postgresql
     ports:
       - '7233:7233'
-    # nc (netcat) is available in the auto-setup Alpine image; probes the gRPC port
+    # Temporal binds to the container's network interface (not loopback), so probe
+    # via its hostname IP. nc (netcat) is available in the auto-setup Alpine image.
     healthcheck:
-      test: ['CMD-SHELL', 'nc -z localhost 7233 || exit 1']
+      test: ['CMD-SHELL', 'nc -z $(hostname -i) 7233 || exit 1']
       interval: 10s
       timeout: 5s
       retries: 12
